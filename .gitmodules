@@ -1,0 +1,6 @@
+[submodule "QuantumVk"]
+	path = QuantumVk
+	url = https://github.com/quantumgfx/QuantumVk.git
+[submodule "dependencies/glfw"]
+	path = dependencies/glfw
+	url = https://github.com/glfw/glfw.git
