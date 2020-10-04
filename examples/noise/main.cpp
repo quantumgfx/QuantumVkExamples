@@ -5,8 +5,8 @@
 
 #include <GLFW/glfw3.h>
 
-#include "glfw_platform.hpp"
-#include "shader_loader.hpp"
+#include "../common/glfw_platform.hpp"
+#include "../common/shader_loader.hpp"
 
 int main(int argc, char** argv)
 {
@@ -53,6 +53,19 @@ int main(int argc, char** argv)
 
 				wsi.BeginFrame();
 				{
+					
+					if ((float)std::rand() / (float)RAND_MAX > .993f)
+					{
+						QM_LOG_TRACE("Randomizing color...\n");
+						current_target = (float)std::rand() / (float)RAND_MAX;
+					}
+
+					float dist = current_target - current_hue;
+					
+					current_hue += dist * current_delta * 0.5f;
+					
+					// Rendering process
+					
 					auto cmd = device.RequestCommandBuffer();
 
 					// Just render a clear color to screen.
@@ -72,31 +85,20 @@ int main(int argc, char** argv)
 					cmd->SetPrimitiveTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 					cmd->SetCullMode(VK_CULL_MODE_NONE);
 
-					float vert_data[12] = { -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f,
-											1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f };
+					float cpu_vert_data[] = { -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f };
+					void* gpu_vert_data = cmd->AllocateVertexData(0, sizeof(cpu_vert_data));
+					memcpy(gpu_vert_data, cpu_vert_data, sizeof(cpu_vert_data));
 
-
-					void* vertex_data = cmd->AllocateVertexData(0, sizeof(vert_data));
-					memcpy(vertex_data, vert_data, sizeof(vert_data));
-
-					if ((float)std::rand() / (float)RAND_MAX > .993f)
-					{
-						QM_LOG_TRACE("CHANGE\n");
-						current_target = (float)std::rand() / (float)RAND_MAX;
-					}
-
-					float dist = current_target - current_hue;
-					
-					current_hue += dist * current_delta * 0.5f;
-
-					float unif_data[4] = { current_hue, 0.3f , current_time / 10.0f, current_time };
-					void* uniform_data = cmd->AllocateConstantData(0, 0, sizeof(float) * 4);
-					memcpy(uniform_data, unif_data, sizeof(float) * 4);
+					float cpu_uniform_data[] = { current_hue, 0.3f , current_time / 10.0f, current_time };
+					void* gpu_uniform_data = cmd->AllocateConstantData(0, 0, sizeof(float) * 4);
+					memcpy(gpu_uniform_data, cpu_uniform_data, sizeof(float) * 4);
 
 					cmd->Draw(6);
 
 					cmd->EndRenderPass();
 					device.Submit(cmd);
+					
+					// -----------------
 				}
 
 				wsi.EndFrame();

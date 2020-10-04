@@ -22,21 +22,26 @@ set(USE_MSVC_RUNTIME_LIBRARY_DLL OFF)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glfw)
 
-add_executable(basic_example)
+macro(add_example name sources)
 
-target_link_libraries(basic_example PRIVATE QuantumVk)
-target_link_libraries(basic_example PRIVATE glfw)
+add_executable(${name})
 
-target_include_directories(basic_example PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/QuantumVk)
-target_include_directories(basic_example PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glfw/include)
+target_link_libraries(${name} PRIVATE QuantumVk)
+target_link_libraries(${name} PRIVATE glfw)
 
-set(BASIC_EXAMPLE_SRC examples/basic/main.cpp)
+target_include_directories(${name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/QuantumVk)
+target_include_directories(${name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glfw/include)
+target_include_directories(${name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glm)
 
-target_sources(basic_example PUBLIC ${BASIC_EXAMPLE_SRC})
+target_sources(${name} PUBLIC ${sources})
 
 include(GNUInstallDirs)	
-install(TARGETS basic_example CONFIGURATIONS Debug DESTINATION basic_example_debug)
-install(TARGETS basic_example CONFIGURATIONS Release DESTINATION basic_example_release)
+install(TARGETS ${name} CONFIGURATIONS Debug DESTINATION ${name}_debug)
+install(TARGETS ${name} CONFIGURATIONS Release DESTINATION ${name}_release)
 
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/examples/basic/spirv/vertex.spv ${CMAKE_CURRENT_SOURCE_DIR}/examples/basic/spirv/fragment.spv CONFIGURATIONS Debug DESTINATION basic_example_debug/spirv)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/examples/basic/spirv/vertex.spv ${CMAKE_CURRENT_SOURCE_DIR}/examples/basic/spirv/fragment.spv CONFIGURATIONS Release DESTINATION basic_example_release/spirv)
+endmacro()
+
+add_example(noise examples/noise/main.cpp)
+
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/examples/noise/spirv/vertex.spv ${CMAKE_CURRENT_SOURCE_DIR}/examples/noise/spirv/fragment.spv CONFIGURATIONS Debug DESTINATION noise_debug/spirv)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/examples/noise/spirv/vertex.spv ${CMAKE_CURRENT_SOURCE_DIR}/examples/noise/spirv/fragment.spv CONFIGURATIONS Release DESTINATION noise_release/spirv)
