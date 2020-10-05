@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 					memcpy(gpu_vert_data, cpu_vert_data, sizeof(cpu_vert_data));
 
 					float cpu_uniform_data[] = { current_hue, 0.3f , current_time / 10.0f, current_time };
-					void* gpu_uniform_data = cmd->AllocateConstantData(0, 0, sizeof(float) * 4);
+					void* gpu_uniform_data = cmd->AllocateConstantData(0, 0, 0, sizeof(float) * 4);
 					memcpy(gpu_uniform_data, cpu_uniform_data, sizeof(float) * 4);
 
 					cmd->Draw(6);
