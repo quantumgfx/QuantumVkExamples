@@ -6,7 +6,7 @@
 #include <GLFW/glfw3.h>
 
 #include "../common/glfw_platform.hpp"
-#include "../common/shader_loader.hpp"
+#include "../common/file_loader.hpp"
 
 int main(int argc, char** argv)
 {
@@ -26,8 +26,8 @@ int main(int argc, char** argv)
 		{
 			Vulkan::Device& device = wsi.GetDevice();
 			
-			std::vector<char> vertex_code = readFile("spirv/vertex.spv");
-			std::vector<char> frag_code = readFile("spirv/fragment.spv");
+			std::vector<char> vertex_code = ReadFile("spirv/vertex.spv");
+			std::vector<char> frag_code = ReadFile("spirv/fragment.spv");
 			
 			Vulkan::ShaderHandle vert_shader = device.CreateShader(reinterpret_cast<const uint32_t*>(vertex_code.data()), vertex_code.size());
 			Vulkan::ShaderHandle frag_shader = device.CreateShader(reinterpret_cast<const uint32_t*>(frag_code.data()), frag_code.size());
@@ -119,6 +119,4 @@ int main(int argc, char** argv)
 	}
 
 	glfwTerminate();
-	
-	std::cout << "Hello World" << std::endl;
 }

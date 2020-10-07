@@ -45,3 +45,10 @@ add_example(noise examples/noise/main.cpp)
 
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/examples/noise/spirv/vertex.spv ${CMAKE_CURRENT_SOURCE_DIR}/examples/noise/spirv/fragment.spv CONFIGURATIONS Debug DESTINATION noise_debug/spirv)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/examples/noise/spirv/vertex.spv ${CMAKE_CURRENT_SOURCE_DIR}/examples/noise/spirv/fragment.spv CONFIGURATIONS Release DESTINATION noise_release/spirv)
+
+add_example(mesh_viewer examples/mesh_viewer/main.cpp)
+
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/examples/mesh_viewer/spirv/vertex.spv ${CMAKE_CURRENT_SOURCE_DIR}/examples/mesh_viewer/spirv/fragment.spv CONFIGURATIONS Debug DESTINATION mesh_viewer_debug/spirv)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/examples/mesh_viewer/spirv/vertex.spv ${CMAKE_CURRENT_SOURCE_DIR}/examples/mesh_viewer/spirv/fragment.spv CONFIGURATIONS Release DESTINATION mesh_viewer_release/spirv)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/examples/mesh_viewer/model.obj ${CMAKE_CURRENT_SOURCE_DIR}/examples/mesh_viewer/diffuse.png CONFIGURATIONS Debug DESTINATION mesh_viewer_debug)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/examples/mesh_viewer/model.obj ${CMAKE_CURRENT_SOURCE_DIR}/examples/mesh_viewer/diffuse.png CONFIGURATIONS Release DESTINATION mesh_viewer_release)
