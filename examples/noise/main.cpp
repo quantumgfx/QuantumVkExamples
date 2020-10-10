@@ -72,9 +72,9 @@ int main(int argc, char** argv)
 					// There is a lot of stuff going on in these few calls which will need its own sample to explore w.r.t. synchronization.
 					// For now, you'll just get a blue-ish color on screen.
 					Vulkan::RenderPassInfo rp = device.GetSwapchainRenderPass(Vulkan::SwapchainRenderPass::ColorOnly);
-					rp.clear_color[0].float32[0] = 0.1f;
-					rp.clear_color[0].float32[1] = 0.2f;
-					rp.clear_color[0].float32[2] = 0.3f;
+					rp.color_attachments[0].clear_color.float32[0] = 0.1f;
+					rp.color_attachments[0].clear_color.float32[1] = 0.2f;
+					rp.color_attachments[0].clear_color.float32[2] = 0.3f;
 					cmd->BeginRenderPass(rp);
 
 					cmd->SetOpaqueState();

@@ -12,6 +12,43 @@
 #include "../common/glfw_platform.hpp"
 #include "../common/file_loader.hpp"
 
+static bool is_mouse_pressed = false;
+static double mouse_x = 0, mouse_y = 0;
+
+static inline void SetCameraMouseCallbacks(GLFWwindow* window)
+{
+	glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods)
+		{
+			switch (action)
+			{
+			case GLFW_PRESS:
+			{
+				is_mouse_pressed = true;
+				break;
+			}
+			case GLFW_RELEASE:
+			{
+				is_mouse_pressed = false;
+				break;
+			}
+			}
+		});
+
+	/*glfwSetScrollCallback(window, [](GLFWwindow* window, double xOffset, double yOffset)
+		{
+			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
+			MouseScrolledEvent event((float)xOffset, (float)yOffset);
+			data.eventCallback(event);
+		})*/;
+
+	glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xPos, double yPos)
+		{
+			mouse_x = xPos; 
+			mouse_y = yPos;
+		});
+}
+
 int main(int argc, char** argv)
 {
 
@@ -35,6 +72,8 @@ int main(int argc, char** argv)
 
 	{
 		GLFWPlatform platform;
+
+		SetCameraMouseCallbacks(platform.GetNativeWindow());
 
 		Vulkan::WSI wsi;
 		wsi.SetPlatform(&platform);
@@ -128,11 +167,43 @@ int main(int argc, char** argv)
 			float shine;
 			float reflectivity;
 			float ambient;
+
+			float theta = 0;
+			float phi = 0;
+
+			float radius = 0.6f;
+
+			double last_time = 0;
+			double current_delta = 0;
+
+			double last_mouse_x = 0, last_mouse_y = 0;
+			double mouse_dx = 0, mouse_dy = 0;
 			
 			while (platform.Alive(wsi))
 			{
+				if (is_mouse_pressed)
+				{
+					theta += mouse_dx * current_delta * 4.0f;
+					phi += mouse_dy * current_delta * 4.0f;
+
+					if (phi > 80.0f)
+					{
+						phi = 80.0f;
+					}
+					else if (phi < -80.0f)
+					{
+						phi = -80.0f;
+					}
+				}
+
+				float camera_x = glm::cos(glm::radians(theta)) * radius * glm::cos(glm::radians(phi));
+				float camera_y = glm::sin(glm::radians(theta)) * radius * glm::cos(glm::radians(phi));
+				float camera_z = glm::sin(glm::radians(phi)) * radius;
+
 				proj_matrix = glm::perspective(glm::radians(70.0f), (float)device.GetSwapchainWidth() / (float)device.GetSwapchainHeight(), .01f, 1000.0f);
-				view_matrix = glm::lookAt(glm::vec3(0.1f, .5f, 0.5f), glm::vec3(0.0f, 0.25f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				proj_matrix[1][1] *= -1;
+
+				view_matrix = glm::lookAt(glm::vec3(camera_x, camera_y, camera_z), glm::vec3(0.0f, 0.25f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
 				light_position = { 0.0f, 10.0f, 10.0f, 0.0f };
 				light_color = { 1.0f, 1.0f, 1.0f, 0.0f };
@@ -152,16 +223,18 @@ int main(int argc, char** argv)
 
 					Vulkan::RenderPassInfo rp{};
 					rp.num_color_attachments = 1;
-					rp.color_attachments[0] = &device.GetSwapchainView();
+					rp.color_attachments[0].view = &device.GetSwapchainView();
+					rp.color_attachments[0].clear_color.float32[0] = 0.1f;
+					rp.color_attachments[0].clear_color.float32[1] = 0.2f;
+					rp.color_attachments[0].clear_color.float32[2] = 0.3f;
+
 					rp.clear_attachments = ~0u;
-
-					rp.clear_color[0].float32[0] = 0.1f;
-					rp.clear_color[0].float32[1] = 0.2f;
-					rp.clear_color[0].float32[2] = 0.3f;
-
 					rp.store_attachments = 1u << 0;
 
-					rp.depth_stencil = &device.GetPhysicalAttachment(device.GetSwapchainWidth(), device.GetSwapchainHeight(), device.GetDefaultDepthFormat());
+					rp.depth_stencil.view = &device.GetPhysicalAttachment(device.GetSwapchainWidth(), device.GetSwapchainHeight(), device.GetDefaultDepthFormat());
+					rp.depth_stencil.initial_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+					rp.op_flags |= Vulkan::RENDER_PASS_OP_CLEAR_DEPTH_STENCIL_BIT;
 
 					Vulkan::RenderPassInfo::Subpass subpass{};
 					subpass.num_color_attachments = 1;
@@ -222,6 +295,17 @@ int main(int argc, char** argv)
 				}
 
 				wsi.EndFrame();
+
+				double time = glfwGetTime();
+				current_delta = time - last_time;
+				last_time = time;
+
+				mouse_dx = mouse_x - last_mouse_x;
+				mouse_dy = mouse_y - last_mouse_y;
+
+				last_mouse_x = mouse_x;
+				last_mouse_y = mouse_y;
+
 			}
 
 			program.Reset();

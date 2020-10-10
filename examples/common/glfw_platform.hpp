@@ -69,6 +69,11 @@ struct GLFWPlatform : public Vulkan::WSIPlatform
 		height = static_cast<uint32_t>(height_);
 	}
 
+	GLFWwindow* GetNativeWindow()
+	{
+		return window;
+	}
+
 private:
 
 	GLFWwindow* window = nullptr;
