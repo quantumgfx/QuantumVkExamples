@@ -86,8 +86,8 @@ int main(int argc, char** argv)
 			std::vector<char> vertex_code = ReadFile("spirv/vertex.spv");
 			std::vector<char> frag_code = ReadFile("spirv/fragment.spv");
 			
-			Vulkan::ShaderHandle vert_shader = device.CreateShader(reinterpret_cast<const uint32_t*>(vertex_code.data()), vertex_code.size());
-			Vulkan::ShaderHandle frag_shader = device.CreateShader(reinterpret_cast<const uint32_t*>(frag_code.data()), frag_code.size());
+			Vulkan::ShaderHandle vert_shader = device.CreateShader(vertex_code.size() / sizeof(uint32_t), reinterpret_cast<const uint32_t*>(vertex_code.data()));
+			Vulkan::ShaderHandle frag_shader = device.CreateShader(frag_code.size() / sizeof(uint32_t), reinterpret_cast<const uint32_t*>(frag_code.data()));
 			
 			Vulkan::GraphicsProgramShaders p_shaders;
 			p_shaders.vertex = vert_shader;
@@ -117,20 +117,25 @@ int main(int argc, char** argv)
 				vert_create_info.domain = Vulkan::BufferDomain::Device;
 				vert_create_info.size = sizeof(Vertex) * vertices.size();
 				vert_create_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+				vert_create_info.sharing_mode = Vulkan::BufferSharingMode::Exclusive;
+				vert_create_info.exclusive_owner = Vulkan::BUFFER_COMMAND_QUEUE_GENERIC;
 
-				vertex_buffer = device.CreateBuffer(vert_create_info, Vulkan::RESOURCE_EXCLUSIVE_GENERIC, vertices.data());
+				vertex_buffer = device.CreateBuffer(vert_create_info, vertices.data());
 
 				Vulkan::BufferCreateInfo index_create_info{};
 				index_create_info.domain = Vulkan::BufferDomain::Device;
 				index_create_info.size = sizeof(uint32_t) * indices.size();
 				index_create_info.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+				index_create_info.sharing_mode = Vulkan::BufferSharingMode::Exclusive;
+				index_create_info.exclusive_owner = Vulkan::BUFFER_COMMAND_QUEUE_GENERIC;
 
-				index_buffer = device.CreateBuffer(index_create_info, Vulkan::RESOURCE_EXCLUSIVE_GENERIC, indices.data());
+				index_buffer = device.CreateBuffer(index_create_info,  indices.data());
 			}
 
 			std::cout << "Loading diffuse texture\n";
 
 			Vulkan::ImageHandle diffuse;
+			Vulkan::ImageViewHandle diffuse_view;
 
 			{
 				int width, height;
@@ -139,6 +144,8 @@ int main(int argc, char** argv)
 				std::cout << "Texture has width: " << width << " and height " << height << "\n";
 
 				Vulkan::ImageCreateInfo diffuse_create_info = Vulkan::ImageCreateInfo::Immutable2dImage(width, height, VK_FORMAT_R8G8B8A8_SRGB, true);
+				diffuse_create_info.sharing_mode = Vulkan::ImageSharingMode::Exclusive;
+				diffuse_create_info.exclusive_owner = Vulkan::IMAGE_COMMAND_QUEUE_GENERIC;
 
 				Vulkan::ImageStagingCopyInfo copy{};
 				copy.buffer_offset = 0;
@@ -150,10 +157,19 @@ int main(int argc, char** argv)
 				copy.base_array_layer = 0;
 				copy.num_layers = 1;
 
-				diffuse = device.CreateImage(diffuse_create_info, Vulkan::RESOURCE_EXCLUSIVE_GENERIC, pixels.size(), pixels.data(), 1, &copy);
+				diffuse = device.CreateImage(diffuse_create_info,  pixels.size(), pixels.data(), 1, &copy);
 
 				if (!diffuse)
 					std::cout << "Failed to create image\n";
+
+				Vulkan::ImageViewCreateInfo view_info{};
+				view_info.image = diffuse;
+				view_info.base_layer = 0;
+				view_info.base_level = 1;
+				view_info.view_type = VK_IMAGE_VIEW_TYPE_2D;
+				
+				diffuse_view = device.CreateImageView(view_info);
+
 			}
 
 			std::cout << "Diffuse texture loaded\n";
@@ -246,7 +262,7 @@ int main(int argc, char** argv)
 
 					cmd->BeginRenderPass(rp);
 
-					cmd->SetProgram(program);
+					cmd->SetProgram(*program);
 
 					cmd->SetOpaqueState();
 					cmd->SetDepthTest(true, true);
@@ -284,7 +300,7 @@ int main(int argc, char** argv)
 					*(float*)frag_ubo = 0.0f;
 					frag_ubo += sizeof(float);
 
-					cmd->SetSampledTexture(1, 0, 0, diffuse->GetView(), Vulkan::StockSampler::LinearWrap);
+					cmd->SetSampledTexture(1, 0, 0, *diffuse_view, Vulkan::StockSampler::LinearWrap);
 
 					cmd->DrawIndexed(index_count);
 

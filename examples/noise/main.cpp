@@ -29,8 +29,8 @@ int main(int argc, char** argv)
 			std::vector<char> vertex_code = ReadFile("spirv/vertex.spv");
 			std::vector<char> frag_code = ReadFile("spirv/fragment.spv");
 			
-			Vulkan::ShaderHandle vert_shader = device.CreateShader(reinterpret_cast<const uint32_t*>(vertex_code.data()), vertex_code.size());
-			Vulkan::ShaderHandle frag_shader = device.CreateShader(reinterpret_cast<const uint32_t*>(frag_code.data()), frag_code.size());
+			Vulkan::ShaderHandle vert_shader = device.CreateShader(vertex_code.size() / sizeof(uint32_t), reinterpret_cast<const uint32_t*>(vertex_code.data()));
+			Vulkan::ShaderHandle frag_shader = device.CreateShader(frag_code.size() / sizeof(uint32_t), reinterpret_cast<const uint32_t*>(frag_code.data()));
 			
 			Vulkan::GraphicsProgramShaders p_shaders;
 			p_shaders.vertex = vert_shader;
@@ -79,7 +79,7 @@ int main(int argc, char** argv)
 
 					cmd->SetOpaqueState();
 
-					cmd->SetProgram(program);
+					cmd->SetProgram(*program);
 					cmd->SetVertexAttrib(0, 0, VK_FORMAT_R32G32_SFLOAT, 0);
 					cmd->SetVertexBinding(0, sizeof(float) * 2);
 					cmd->SetPrimitiveTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
